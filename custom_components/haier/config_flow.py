@@ -9,13 +9,19 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.helpers.config_validation import multi_select
 
 from .const import DOMAIN, FILTER_TYPE_EXCLUDE, FILTER_TYPE_INCLUDE
-from .core.client import HaierClientException, HaierClient
+from .core.client import HaierClientException, HaierClient, APP_SOURCE_APP, APP_SOURCE_WXAPP, DEFAULT_APP_SOURCE
 from .core.config import AccountConfig, DeviceFilterConfig, EntityFilterConfig
 
 _LOGGER = logging.getLogger(__name__)
 
 CLIENT_ID = 'client_id'
 REFRESH_TOKEN = 'refresh_token'
+APP_SOURCE = 'app_source'
+
+APP_SOURCE_OPTIONS = {
+    APP_SOURCE_WXAPP: '微信小程序',
+    APP_SOURCE_APP: 'App',
+}
 
 class HaierConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 2
@@ -25,10 +31,10 @@ class HaierConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             try:
                 # 根据refresh_token获取token
-                client = HaierClient(self.hass, user_input[CLIENT_ID], '')
+                client = HaierClient(self.hass, user_input[CLIENT_ID], '', user_input[APP_SOURCE])
                 token_info = await client.refresh_token(user_input[REFRESH_TOKEN])
                 # 获取用户信息
-                client = HaierClient(self.hass, user_input[CLIENT_ID], token_info.token)
+                client = HaierClient(self.hass, user_input[CLIENT_ID], token_info.token, user_input[APP_SOURCE])
                 user_info = await client.get_user_info()
 
                 return self.async_create_entry(title="Haier - {}".format(user_info['mobile']), data={
@@ -37,6 +43,7 @@ class HaierConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         'token': token_info.token,
                         'refresh_token': token_info.refresh_token,
                         'expires_at': int(time.time()) + token_info.expires_in,
+                        'app_source': user_input[APP_SOURCE],
                         'default_load_all_entity': user_input['default_load_all_entity'],
                         'ignore_device_offline': user_input['ignore_device_offline']
                     }
@@ -51,6 +58,7 @@ class HaierConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 {
                     vol.Required(CLIENT_ID): str,
                     vol.Required(REFRESH_TOKEN): str,
+                    vol.Required(APP_SOURCE, default=DEFAULT_APP_SOURCE): vol.In(APP_SOURCE_OPTIONS),
                     vol.Required('default_load_all_entity', default=True): bool,
                     vol.Required('ignore_device_offline', default=False): bool,
                 }
@@ -92,16 +100,17 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         if user_input is not None:
             try:
                 # 根据refresh_token获取token
-                client = HaierClient(self.hass, user_input[CLIENT_ID], '')
+                client = HaierClient(self.hass, user_input[CLIENT_ID], '', user_input[APP_SOURCE])
                 token_info = await client.refresh_token(user_input[REFRESH_TOKEN])
                 # 获取用户信息
-                client = HaierClient(self.hass, user_input[CLIENT_ID], token_info.token)
+                client = HaierClient(self.hass, user_input[CLIENT_ID], token_info.token, user_input[APP_SOURCE])
                 user_info = await client.get_user_info()
 
                 cfg.client_id = user_input[CLIENT_ID]
                 cfg.token = token_info.token
                 cfg.refresh_token = token_info.refresh_token
                 cfg.expires_at = int(time.time()) + token_info.expires_in
+                cfg.app_source = user_input[APP_SOURCE]
                 cfg.default_load_all_entity = user_input['default_load_all_entity']
                 cfg.ignore_device_offline = user_input['ignore_device_offline']
                 cfg.save(user_info['mobile'])
@@ -119,6 +128,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 {
                     vol.Required(CLIENT_ID, default=cfg.client_id): str,
                     vol.Required(REFRESH_TOKEN, default=cfg.refresh_token): str,
+                    vol.Required(APP_SOURCE, default=cfg.app_source): vol.In(APP_SOURCE_OPTIONS),
                     vol.Required('default_load_all_entity', default=cfg.default_load_all_entity): bool,
                     vol.Required('ignore_device_offline', default=cfg.ignore_device_offline): bool,
                 }

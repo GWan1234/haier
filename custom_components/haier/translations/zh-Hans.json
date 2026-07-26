@@ -10,6 +10,7 @@
                 "data": {
                     "client_id": "Client Id",
                     "refresh_token": "Refresh Token",
+                    "app_source": "Token来源",
                     "default_load_all_entity": "默认加载所有实体",
                     "ignore_device_offline": "忽略设备离线状态（离线时保留最后状态）"
                 }
@@ -33,6 +34,7 @@
                 "data": {
                     "client_id": "Client Id",
                     "refresh_token": "Refresh Token",
+                    "app_source": "Token来源",
                     "default_load_all_entity": "默认加载所有实体",
                     "ignore_device_offline": "忽略设备离线状态（离线时保留最后状态）"
                 }

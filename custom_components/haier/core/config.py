@@ -5,6 +5,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from custom_components.haier.const import FILTER_TYPE_EXCLUDE, FILTER_TYPE_INCLUDE
+from custom_components.haier.core.client import DEFAULT_APP_SOURCE
 
 
 class AccountConfig:
@@ -20,6 +21,9 @@ class AccountConfig:
 
     expires_at: int = None
 
+    # token来源客户端，决定请求使用的appId/appKey，须与token的来源客户端一致
+    app_source: str = None
+
     default_load_all_entity: bool = None
 
     # 是否忽略设备离线状态。为True时设备离线不会将实体标记为不可用，而是保留最后一次的状态
@@ -34,6 +38,7 @@ class AccountConfig:
         self.token = cfg.get('token', '')
         self.refresh_token = cfg.get('refresh_token', '')
         self.expires_at = cfg.get('expires_at', 0)
+        self.app_source = cfg.get('app_source', DEFAULT_APP_SOURCE)
         self.default_load_all_entity = cfg.get('default_load_all_entity', True)
         self.ignore_device_offline = cfg.get('ignore_device_offline', False)
 
@@ -48,6 +53,7 @@ class AccountConfig:
                     'token': self.token,
                     'refresh_token': self.refresh_token,
                     'expires_at': self.expires_at,
+                    'app_source': self.app_source,
                     'default_load_all_entity': self.default_load_all_entity,
                     'ignore_device_offline': self.ignore_device_offline
                 }

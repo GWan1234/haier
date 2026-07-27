@@ -25,7 +25,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     hass.data[DOMAIN]['cancel_token_updater'] = await token_updater(hass, entry)
 
     account_cfg = AccountConfig(hass, entry)
-    client = HaierClient(hass, account_cfg.client_id, account_cfg.token)
+    client = HaierClient(hass, account_cfg.client_id, account_cfg.token, account_cfg.app_source)
 
     # 是否忽略设备离线状态，供实体在收到离线事件时判断是否保留最后状态
     hass.data[DOMAIN]['ignore_device_offline'] = account_cfg.ignore_device_offline
@@ -62,7 +62,7 @@ async def token_updater(hass: HomeAssistant, entry: ConfigEntry):
         _LOGGER.debug("try update token...")
 
         cfg = AccountConfig(hass, entry)
-        client = HaierClient(hass, cfg.client_id, cfg.token)
+        client = HaierClient(hass, cfg.client_id, cfg.token, cfg.app_source)
 
         token_valid = True
         try:

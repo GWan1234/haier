@@ -17,8 +17,19 @@ from .device import HaierDevice
 
 _LOGGER = logging.getLogger(__name__)
 
-APP_ID = 'MB-SHEZJAPPWXXCX-0000'
-APP_KEY = '79ce99cc7f9804663939676031b8a427'
+# token来源客户端。refresh_token与签发它的appId绑定，用其他客户端的appId去刷新
+# 会返回 43005 授权异常或失败，所以此处须与token的来源客户端一致
+APP_SOURCE_WXAPP = 'wxapp'
+APP_SOURCE_APP = 'app'
+
+DEFAULT_APP_SOURCE = APP_SOURCE_WXAPP
+
+APP_SOURCES = {
+    # 微信小程序
+    APP_SOURCE_WXAPP: ('MB-SHEZJAPPWXXCX-0000', '79ce99cc7f9804663939676031b8a427'),
+    # App
+    APP_SOURCE_APP: ('MB-UZHSH-0001', '5dfca8714eb26e3a776e58a8273c8752'),
+}
 
 REFRESH_TOKEN_API = 'https://zj.haier.net/api-gw/oauthserver/account/v1/refreshToken'
 GET_USER_INFO_API = 'https://account-api.haier.net/v2/haier/userinfo'
@@ -90,9 +101,10 @@ class HaierClientException(Exception):
 
 class HaierClient:
 
-    def __init__(self, hass: HomeAssistant, client_id: str, token: str):
+    def __init__(self, hass: HomeAssistant, client_id: str, token: str, app_source: str = DEFAULT_APP_SOURCE):
         self._client_id = client_id
         self._token = token
+        self._app_id, self._app_key = APP_SOURCES.get(app_source, APP_SOURCES[DEFAULT_APP_SOURCE])
         self._hass = hass
         self._session = async_get_clientsession(hass)
 
@@ -291,11 +303,11 @@ class HaierClient:
 
         return {
             'accessToken': self._token,
-            'appId': APP_ID,
-            'appKey': APP_KEY,
+            'appId': self._app_id,
+            'appKey': self._app_key,
             'clientId': self._client_id,
             'sequenceId': sequence_id,
-            'sign': self._sign(APP_ID, APP_KEY, timestamp, body, api),
+            'sign': self._sign(self._app_id, self._app_key, timestamp, body, api),
             'timestamp': timestamp,
             'timezone': '+8',
             'language': 'zh-CN'
